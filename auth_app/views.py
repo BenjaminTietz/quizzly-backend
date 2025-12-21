@@ -3,15 +3,15 @@ from rest_framework.views import APIView
 from .serializers import UserSerializer
 from rest_framework.response import Response
 from rest_framework import status
-
-
 from .serializers import RefreshTokenSerializer
 from .utils import refresh_access_token
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
-# Create your views here.
+
 class RegisterView(APIView):
     
-    
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -51,9 +51,67 @@ class RefreshTokenView(APIView):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=True,
+            secure=False,
             samesite="Lax",
             max_age=300,
         )
+
+        return response
+    
+
+class LoginView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return Response(
+                {"detail": "Invalid credentials"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        
+        refresh = RefreshToken.for_user(user)
+        access = str(refresh.access_token)
+
+        response = Response(
+            {"detail": "Login successful", 
+             "access": access,
+            },
+            status=status.HTTP_200_OK,
+        )
+        response.set_cookie(
+            key="access_token",
+            value=access,
+            httponly=True,
+            secure=False,  
+            samesite="Lax",
+            max_age=300,
+        )
+
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh),
+            httponly=True,
+            secure=False,
+            samesite="Lax",
+            max_age=86400,
+        )
+
+        return response
+    
+
+class LogoutView(APIView):
+    def post(self, request):
+        response = Response(
+            {"detail": "Logged out"},
+            status=status.HTTP_200_OK
+        )
+
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
 
         return response
