@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
+
+from auth_app.authentication import CookieJWTAuthentication
 from .serializers import UserSerializer
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,6 +9,7 @@ from .serializers import RefreshTokenSerializer
 from .utils import refresh_access_token
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
 
 
 class RegisterView(APIView):
@@ -87,8 +90,8 @@ class LoginView(APIView):
             key="access_token",
             value=access,
             httponly=True,
-            secure=False,  
-            samesite="Lax",
+            secure=True,  
+            samesite="None",
             max_age=300,
         )
 
@@ -96,8 +99,8 @@ class LoginView(APIView):
             key="refresh_token",
             value=str(refresh),
             httponly=True,
-            secure=False,
-            samesite="Lax",
+            secure=True,  
+            samesite="None",
             max_age=86400,
         )
 
@@ -105,6 +108,9 @@ class LoginView(APIView):
     
 
 class LogoutView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request):
         response = Response(
             {"detail": "Logged out"},
