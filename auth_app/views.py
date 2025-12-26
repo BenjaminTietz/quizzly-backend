@@ -29,8 +29,8 @@ class RefreshTokenView(APIView):
     Refresh access token using refresh token from HTTP-only cookie.
     """
 
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = RefreshTokenSerializer(
@@ -54,8 +54,8 @@ class RefreshTokenView(APIView):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,
-            samesite="Lax",
+            secure=True,
+            samesite="None",
             max_age=300,
         )
 
