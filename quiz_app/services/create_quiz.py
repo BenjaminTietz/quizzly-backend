@@ -1,4 +1,5 @@
 import json
+import os
 from quiz_app.models import Quiz, Question, QuestionOption
 from .download_audio import download_audio
 from .transcribe_audio import transcribe_audio
@@ -13,6 +14,8 @@ def create_quiz_from_url(owner, url):
     quiz_json = generate_quiz_from_transcript(transcript)
 
     if not quiz_json:
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
         raise ValueError("AI was unable to generate a quiz. Answer was empty, invalid, or blocked.")
 
     quiz_json = quiz_json.strip()
@@ -20,6 +23,9 @@ def create_quiz_from_url(owner, url):
     try:
         quiz_data = json.loads(quiz_json)
     except Exception as e:
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
+        print("JSON parsing failed. Raw JSON:", quiz_json)
         raise ValueError("Invalid JSON received from AI.") from e
 
     quiz = Quiz.objects.create(
@@ -36,5 +42,8 @@ def create_quiz_from_url(owner, url):
                 option_text=opt,
                 is_correct=(opt == q["answer"])
             )
+
+    if os.path.exists(audio_path):
+        os.remove(audio_path)
 
     return quiz
