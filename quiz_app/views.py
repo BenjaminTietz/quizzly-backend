@@ -6,7 +6,21 @@ from .models import Quiz
 from .serializers import QuestionSerializer, QuizSerializer
 from rest_framework.response import Response
 from rest_framework import status
-    
+from quiz_app.services.create_quiz import create_quiz_from_url
+
+
+class QuizCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        url = request.data.get('url')
+        if not url:
+            return Response({"detail": "URL is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        quiz = create_quiz_from_url(user=request.user, url=url)
+        serializer = QuizSerializer(quiz)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class QuizListView(APIView):
     permission_classes = [permissions.IsAuthenticated]

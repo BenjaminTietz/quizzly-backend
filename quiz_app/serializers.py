@@ -6,22 +6,11 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'text', 'answers']
+        fields = ['id', 'text']
+
 
 class QuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        fields = ['id', 'title', 'description', 'category', 'difficulty']
-
-class FavoriteSerializer(serializers.ModelSerializer):
-    quiz = QuizSerializer()
-
-    class Meta:
-        fields = ['id', 'quiz']
-
-class ProgressSerializer(serializers.ModelSerializer):
-    quiz = QuizSerializer()
-
-    class Meta:
-        fields = ['id', 'quiz', 'score', 'completed']
+        fields = ['id', 'title', 'description']

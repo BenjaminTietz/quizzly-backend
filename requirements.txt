@@ -9,3 +9,4 @@ PyJWT==2.10.1
 python-dotenv==1.2.1
 sqlparse==0.5.4
 tzdata==2025.3
+yt-dlp==2025.12.8
