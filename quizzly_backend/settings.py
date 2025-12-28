@@ -60,19 +60,30 @@ ROOT_URLCONF = "quizzly_backend.urls"
 WSGI_APPLICATION = "quizzly_backend.wsgi.application"
 
 # =====================================================
-# Database (PostgreSQL)
+# Database (PostgreSQL or SQLite while developing / testing)
 # =====================================================
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB"),
-        "USER": os.getenv("POSTGRES_USER"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST"),
-        "PORT": os.getenv("POSTGRES_PORT", "5432"),
+if DJANGO_ENV == "test":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test_db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("POSTGRES_DB"),
+            "USER": os.getenv("POSTGRES_USER"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+            "HOST": os.getenv("POSTGRES_HOST"),
+            "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        }
+    }
+
+
+
 
 # =====================================================
 # Auth / User
@@ -166,5 +177,5 @@ TEMPLATES = [
         },
     },
 ]
-# might be needed while deploying and first time creating the database
+# TODO: might be needed while deploying and first time creating the database
 #DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

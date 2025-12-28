@@ -11,7 +11,11 @@ if [ -n "$POSTGRES_HOST" ]; then
   echo "✅ PostgreSQL is available"
 fi
 
+echo "make migrations..."
+python manage.py makemigrations --noinput
+
 echo "Running migrations..."
+
 python manage.py migrate --noinput
 
 echo "Creating superuser if not exists..."

@@ -16,6 +16,15 @@ class RegisterView(APIView):
     
 
     def post(self, request):
+        """
+        Registers a new user with the given data.
+
+        Args:
+            request: The incoming request.
+
+        Returns:
+            Response: A response containing the registered user data if successful, otherwise an error response.
+        """
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -29,8 +38,8 @@ class RefreshTokenView(APIView):
     Refresh access token using refresh token from HTTP-only cookie.
     """
 
-    authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = []
+    permission_classes = []
 
     def post(self, request):
         serializer = RefreshTokenSerializer(
@@ -56,7 +65,7 @@ class RefreshTokenView(APIView):
             httponly=True,
             secure=True,
             samesite="None",
-            max_age=300,
+            max_age=60,
         )
 
         return response
@@ -67,6 +76,16 @@ class LoginView(APIView):
     permission_classes = []
 
     def post(self, request):
+        """
+        Authenticates a user using the given credentials and returns an access token and a refresh token.
+
+        Args:
+            request: The incoming request.
+
+        Returns:
+            Response: A response containing the access token and refresh token if successful, otherwise an error response.
+        """
+        
         username = request.data.get("username")
         password = request.data.get("password")
 
@@ -112,6 +131,12 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
+        """
+        Logs out the user by deleting the access token and refresh token cookies.
+
+        Returns:
+            Response: A response with a status of 200 OK.
+        """
         response = Response(
             {"detail": "Logged out"},
             status=status.HTTP_200_OK
