@@ -4,31 +4,31 @@
 
 1. [Introduction](#introduction)
 2. [Prerequisites](#prerequisites)
-3. [Quickstart](#quickstart)
-4. [Usage](#usage)
-5. [Tech Stack](#tech-stack)
-6. [Architecture Overview](#architecture-overview)
-7. [Authentication Concept](#authentication-concept)
-8. [API Documentation](#api-documentation)
-9. [CORS & CSRF Configuration](#cors--csrf-configuration)
-10. [Local Development Setup](#local-development-setup)
-11. [Requirements](#requirements)
-12. [Checklist](checklist.pdf)
+3. [Deployment with Docker Compose](#deployment-with-docker-compose)
+4. [Quickstart](#quickstart)
+5. [Usage](#usage)
+6. [Tech Stack](#tech-stack)
+7. [Architecture Overview](#architecture-overview)
+8. [Authentication Concept](#authentication-concept)
+9. [API Documentation](#api-documentation)
+10. [CORS & CSRF Configuration](#cors--csrf-configuration)
+11. [Local Development (without Docker)](#local-development-without-docker)
+12. [Requirements](#requirements)
 13. [Contact](#contact)
 
 ---
 
 ## Introduction
 
-This repository contains the **Django REST backend** for **Quizly**, an educational quiz application that allows users to generate quizzes from YouTube videos.
+This repository contains the **Django REST backend** for **Quizly**, an educational quiz application that allows users to generate quizzes from YouTube videos using AI-based transcription and question generation.
 
 The backend is responsible for:
 
 - User registration and authentication
-- Secure session handling using JWT and HttpOnly cookies
-- Quiz creation, storage, and management
-- Integration with AI services for transcription and quiz generation
-- Providing a REST API consumed by a separate frontend application
+- Secure session handling using JWT stored in HttpOnly cookies
+- Quiz creation, storage, and evaluation
+- Integration with external AI services
+- Providing a REST API consumed by a separate frontend
 
 The frontend is **not included** in this repository and communicates exclusively via HTTP requests.
 
@@ -36,76 +36,112 @@ The frontend is **not included** in this repository and communicates exclusively
 
 ## Prerequisites
 
-- A V-Server running Ubuntu/Debian
-- Docker
+- Linux server (Ubuntu/Debian recommended)
+- Docker & Docker Compose
+- Git
 
-Ensure your system is up to date:
+Install Docker if not already available:
 
-```sh
-sudo apt update && sudo apt install -y docker.io
+```bash
+sudo apt update && sudo apt install -y docker.io docker-compose
 ```
+
+---
+
+## Deployment with Docker Compose
+
+The backend is deployed using **Docker Compose** with two isolated services:
+
+- **backend** – Django + Gunicorn
+- **db** – PostgreSQL database
+
+All configuration is handled via environment variables defined in a `.env` file.
+
+### Services Overview
+
+- Backend listens on **port 8000**
+- PostgreSQL runs inside the Docker network (not publicly exposed)
+- Static files are served using **WhiteNoise**
+- A Django superuser is created automatically on first startup (optional)
 
 ---
 
 ## Quickstart
 
-1. **Install dependencies:**
-   ```sh
-   sudo apt update && sudo apt install -y docker.io docker-compose git
-   ```
-2. **Clone the repository:**
-   ```sh
-   git clone git@github.com:BenjaminTietz/quizzly-backend.git
-   cd quizzly-backend
-   ```
-3. **Generate and configure the .env file:** <br>
-   The environment file will be created automatically from env.template.
-   Adjust the values to match your setup (optional):
-   ```sh
-   cp .env.template .env
-   nano .env (optional)
-   ```
-4. **Build the Docker image:**
-   ```sh
-   docker build -t quizzly-app .
-   ```
-5. **Create Dockernetwork**
-   ```sh
-   docker network create quizzly-net
-   ```
-6. **Start the database container: (optional adjust values to match your setup)**
+### 1. Clone the repository
 
-   ```sh
+```bash
+git clone https://github.com/BenjaminTietz/quizzly-backend.git
+cd quizzly-backend
+```
 
-   postgres
-   ```
+### 2. Create environment file
 
-   💡 On your local development machine, you can add -p 5432:5432 if needed (e.g., for DBeaver).
-   ❗ On a public server, do not expose port 5432 to the internet!
+```bash
+cp .env.template .env
+```
 
-7. **Start the app container:(optional adujust values to match your setup)**
+Adjust values if needed (database credentials, superuser, secrets).
 
-   ```sh
+### 3. Build and start containers
 
-   ```
+```bash
+docker compose build
+docker compose up -d
+```
 
-8. **Log in to the admin panel:**
-   ```sh
-   http://<your-server-ip>:8020/admin
-   ```
+### 4. Verify running containers
+
+```bash
+docker compose ps
+```
+
+### 5. Access the application
+
+- Backend API:  
+  `http://<your-server-ip>:8000`
+
+- Django Admin Panel:  
+  `http://<your-server-ip>:8000/admin/`
+
+If configured in `.env`, a superuser is created automatically.
+
+---
+
+## Usage
+
+### Create a superuser manually (optional)
+
+```bash
+docker compose exec backend python manage.py createsuperuser
+```
+
+### View logs
+
+```bash
+docker compose logs -f backend
+docker compose logs -f db
+```
+
+### Stop the application
+
+```bash
+docker compose down
+```
 
 ---
 
 ## Tech Stack
 
-- Python 3.1a
+- Python 3.11
 - Django
 - Django REST Framework
+- PostgreSQL
+- Gunicorn
+- WhiteNoise (static files)
 - JWT Authentication (SimpleJWT)
 - HttpOnly Cookies
-- django-cors-headers
-- SQLite (development)
-- PostgreSQL (production)
+- Docker & Docker Compose
 
 ---
 
@@ -113,13 +149,13 @@ sudo apt update && sudo apt install -y docker.io
 
 The backend follows a **clean and modular architecture**:
 
-- `views.py` – Handles HTTP requests and responses only
-- `serializers.py` – Input validation and data transformation
-- `utils.py` / `services.py` – Business logic and helpers
+- `views.py` – HTTP request/response handling
+- `serializers.py` – Input validation and transformation
+- `services.py` – Business logic
 - `models.py` – Database models
 - `urls.py` – API routing
 
-This separation ensures readability, testability, and maintainability.
+This structure ensures readability, testability, and scalability.
 
 ---
 
@@ -129,38 +165,37 @@ Authentication is implemented using **JWT tokens stored in HttpOnly cookies**.
 
 ### Key principles
 
-- No tokens are stored in localStorage or sessionStorage
-- No Authorization headers are used by the frontend
-- Tokens are inaccessible to JavaScript (HttpOnly)
-- Cross-origin authentication via proper CORS configuration
+- No tokens in localStorage or sessionStorage
+- No Authorization headers required
+- Tokens inaccessible to JavaScript
+- Secure cross-origin authentication via CORS & CSRF configuration
 
 ### Token types
 
-- **Access Token** – short-lived, protects API routes
-- **Refresh Token** – long-lived, used to renew access tokens
+- **Access Token** – short-lived, protects API endpoints
+- **Refresh Token** – long-lived, renews access tokens
 
 ---
 
 ## API Documentation
 
-Detailed API documentation is available in a separate file:
+Detailed API documentation is available here:
 
-➡️ [API.md](./API.md)
+➡️ [API.md](./api.md)
 
 ---
 
 ## CORS & CSRF Configuration
 
 - `django-cors-headers`
-- Explicit allowed origins (including ports)
+- Explicit allowed origins
 - `CORS_ALLOW_CREDENTIALS = True`
 - Trusted CSRF origins
-
-Correct middleware order is mandatory.
+- Correct middleware order enforced
 
 ---
 
-## Local Development Setup
+## Local Development (without Docker)
 
 ```bash
 python -m venv venv
@@ -170,15 +205,20 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Backend runs at `http://127.0.0.1:8000`
+Backend runs at:
+
+```
+http://127.0.0.1:8000
+```
 
 ---
 
 ## Requirements
 
-- Python 3.11
-- FFmpeg (for audio processing)
-- Internet access for external AI services (Gemini API)
+- Python 3.11 (local development)
+- Docker & Docker Compose (deployment)
+- FFmpeg (audio processing)
+- Internet access for external AI services
 
 ---
 
