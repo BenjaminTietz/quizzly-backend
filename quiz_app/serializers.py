@@ -18,9 +18,26 @@ class QuestionSerializer(serializers.ModelSerializer):
         ]
 
     def get_question_options(self, obj):
+        """
+        Returns a list of option texts for the given question object.
+
+        :param obj: A Question object
+        :return: A list of strings representing the option texts
+        :rtype: List[str]
+        """
         return [opt.option_text for opt in obj.options.all()]
 
     def get_answer(self, obj):
+        """
+        Returns the correct answer for the given question object.
+
+        If the correct answer is found, it is returned as a string.
+        Otherwise, None is returned.
+
+        :param obj: A Question object
+        :return: The correct answer as a string, or None if not found
+        :rtype: str | None
+        """
         correct_option = obj.options.filter(is_correct=True).first()
         return correct_option.option_text if correct_option else None
     

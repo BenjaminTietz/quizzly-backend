@@ -3,6 +3,7 @@ from .views import RegisterView, RefreshTokenView, LoginView, LogoutView
 from django.conf.urls import include
 from django.urls import path
 
+
 urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
     path("login/", LoginView.as_view(), name="login"),

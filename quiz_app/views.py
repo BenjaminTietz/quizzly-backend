@@ -13,6 +13,15 @@ class QuizCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        """
+        Creates a new quiz from a given YouTube video URL.
+
+        Args:
+            request (Request): Django request object containing the URL
+
+        Returns:
+            Response: Django response object with either created quiz data or error data
+        """
         url = request.data.get('url')
         if not url:
             return Response({"detail": "URL is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -26,6 +35,15 @@ class QuizListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        """
+        Retrieves a list of quizzes owned by the requesting user.
+
+        Args:
+            request (Request): Django request object
+
+        Returns:
+            Response: Django response object with a list of quizzes in JSON format
+        """
         quizzes = Quiz.objects.filter(owner=request.user)
         serializer = QuizSerializer(quizzes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -35,6 +53,16 @@ class QuizDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, id, user):
+        """
+        Retrieves a quiz object by its ID, or returns an error response if the quiz does not exist or the user does not have permission to access it.
+
+        Args:
+            id (int): The ID of the quiz
+            user (User): The user requesting the quiz
+
+        Returns:
+            tuple: A tuple containing the quiz object or None if an error occurs, and an error response object or None if no error occurs
+        """
         try:
             quiz = Quiz.objects.get(id=id)
         except Quiz.DoesNotExist:
@@ -52,6 +80,19 @@ class QuizDetailView(APIView):
         return quiz, None
 
     def get(self, request, id):
+        """
+        Retrieves a quiz by its ID.
+
+        Args:
+            request (Request): Django request object
+            id (int): The ID of the quiz to retrieve
+
+        Returns:
+            Response: Django response object with either the quiz data in JSON format or an error response
+
+        Raises:
+            Response: Django response object with an error message if the quiz does not exist or the user does not have permission to access it
+        """
         quiz, error_response = self.get_object(id, request.user)
         if error_response:
             return error_response
@@ -60,6 +101,19 @@ class QuizDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request, id):
+        """
+        Patches a quiz with the given ID.
+
+        Args:
+            request (Request): Django request object
+            id (int): The ID of the quiz to patch
+
+        Returns:
+            Response: Django response object with either the patched quiz data in JSON format or an error response
+
+        Raises:
+            Response: Django response object with an error message if the quiz does not exist or the user does not have permission to access it
+        """
         quiz, error_response = self.get_object(id, request.user)
         if error_response:
             return error_response
@@ -71,6 +125,19 @@ class QuizDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
+        """
+        Deletes a quiz by its ID.
+
+        Args:
+            request (Request): Django request object
+            id (int): The ID of the quiz to delete
+
+        Returns:
+            Response: Django response object with either a successful deletion status or an error response
+
+        Raises:
+            Response: Django response object with an error message if the quiz does not exist or the user does not have permission to access it
+        """
         quiz, error_response = self.get_object(id, request.user)
         if error_response:
             return error_response
