@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-
 from auth_app.authentication import CookieJWTAuthentication
 from .serializers import UserSerializer
 from rest_framework.response import Response
@@ -13,9 +12,16 @@ from rest_framework.permissions import IsAuthenticated
 
 
 class RegisterView(APIView):
-    
-
     def post(self, request):
+        """
+        Creates a new user.
+        
+        Args:
+            request (Request): Django request object
+        
+        Returns:
+            Response: Django response object with either created user data or error data
+        """
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -28,11 +34,16 @@ class RefreshTokenView(APIView):
     """
     Refresh access token using refresh token from HTTP-only cookie.
     """
-
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """
+        Refresh access token using refresh token from HTTP-only cookie.
+
+        Returns:
+            Response: Django response object with refreshed access token and HTTP-only cookie
+        """
         serializer = RefreshTokenSerializer(
             data={}, context={"request": request}
         )
@@ -67,6 +78,14 @@ class LoginView(APIView):
     permission_classes = []
 
     def post(self, request):
+        """
+        Authenticates user using provided username and password.
+
+        If authentication is successful, sets HTTP-only cookies for access and refresh tokens.
+
+        Returns:
+            Response: Django response object with either authenticated user data or error data
+        """
         username = request.data.get("username")
         password = request.data.get("password")
 
@@ -112,6 +131,12 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
+        """
+        Logs out the user by deleting the access and refresh tokens.
+
+        Returns:
+            Response: Django response object with success message and 200 status code
+        """
         response = Response(
             {"detail": "Logged out"},
             status=status.HTTP_200_OK
