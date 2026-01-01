@@ -11,15 +11,13 @@ if [ -n "$POSTGRES_HOST" ]; then
   echo "✅ PostgreSQL is available"
 fi
 
-echo "make migrations..."
+echo "Make migrations..."
 python manage.py makemigrations --noinput
 
 echo "Running migrations..."
-
 python manage.py migrate --noinput
 
 echo "Creating superuser if not exists..."
-
 python manage.py shell <<EOF
 from django.contrib.auth import get_user_model
 import os
@@ -44,12 +42,11 @@ else:
     print("Superuser env vars not set, skipping")
 EOF
 
-
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "Starting Gunicorn..."
-gunicorn quizzly_backend.wsgi:application \
+exec gunicorn quizzly_backend.wsgi:application \
   --bind 0.0.0.0:8000 \
-  --workers 3 \
-  --timeout 120
+  --workers 1 \
+  --timeout 300
